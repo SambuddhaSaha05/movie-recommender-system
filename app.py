@@ -2,6 +2,35 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
+import os
+
+def download_if_not_exists(url, filename):
+    if not os.path.exists(filename):
+        st.write(f"Downloading {filename}...")
+        response = requests.get(url)
+        with open(filename, "wb") as f:
+            f.write(response.content)
+        st.write(f"{filename} downloaded successfully.")
+
+MOVIE_DICT_URL = "https://drive.google.com/uc?export=download&id=1oGCSRzQb9rQksmgPrm6WrCkhoHPhBc3P"
+SIMILARITY_URL = "https://drive.google.com/uc?export=download&id=1-R_LVjqm4RPr-j1XT0U9PAnX7_JI1Pbx"
+
+download_if_not_exists(MOVIE_DICT_URL, "movie_dict.pkl")
+download_if_not_exists(SIMILARITY_URL, "similarity.pkl")
+
+movies_dict = pickle.load(open("movie_dict.pkl", "rb"))
+similarity = pickle.load(open("similarity.pkl", "rb"))
+movies = pd.DataFrame(movies_dict)
+
+
+
+
+
+
+import streamlit as st
+import pickle
+import pandas as pd
+import requests
 
 def fetch_poster(movie_id):
     response = requests.get('https://api.themoviedb.org/3/movie/{}?api_key=6bcf4176dd5a400c1f5c569989ff31e6&language=en-US'.format(movie_id))
