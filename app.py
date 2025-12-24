@@ -2,54 +2,30 @@ import os
 import requests
 import pickle
 import pandas as pd
-import streamlit as st
 
-# --------- GOOGLE DRIVE DOWNLOADER (CORRECT VERSION) ----------
-
-def download_from_drive(file_id, filename):
-    if os.path.exists(filename) and os.path.getsize(filename) > 1000000:
+def download_from_drive(url, filename):
+    if os.path.exists(filename):
         return
 
-    st.write(f"Downloading {filename}...")
-
-    URL = "https://docs.google.com/uc?export=download"
-    session = requests.Session()
-
-    response = session.get(URL, params={"id": file_id}, stream=True)
-    token = None
-
-    for key, value in response.cookies.items():
-        if key.startswith("download_warning"):
-            token = value
-
-    if token:
-        response = session.get(URL, params={"id": file_id, "confirm": token}, stream=True)
+    r = requests.get(url, stream=True)
+    if "text/html" in r.headers.get("Content-Type", ""):
+        raise ValueError(f"{filename} is corrupted or HTML page downloaded.")
 
     with open(filename, "wb") as f:
-        for chunk in response.iter_content(32768):
+        for chunk in r.iter_content(chunk_size=32768):
             if chunk:
                 f.write(chunk)
 
-    if os.path.getsize(filename) < 1000000:
-        st.error(f"{filename} is corrupted or HTML page downloaded.")
-        st.stop()
+MOVIE_DICT_URL = "https://drive.google.com/uc?export=download&id=1oGCSRzQb9rQksmgPrm6WrCkhoHPhBc3P"
+SIMILARITY_URL = "https://drive.google.com/uc?export=download&id=1-R_LVjqm4RPr-j1XT0U9PAnX7_JI1Pbx"
 
-    st.success(f"{filename} downloaded successfully.")
-
-
-# --------- FILE IDS ----------
-
-MOVIE_DICT_ID = "1oGCSRzQb9rQksmgPrm6WrCkhoHPhBc3P"
-SIMILARITY_ID = "1-R_LVjqm4RPr-j1XT0U9PAnX7_JI1Pbx"
-
-download_from_drive(MOVIE_DICT_ID, "movie_dict.pkl")
-download_from_drive(SIMILARITY_ID, "similarity.pkl")
-
-# --------- LOAD DATA ----------
+download_from_drive(MOVIE_DICT_URL, "movie_dict.pkl")
+download_from_drive(SIMILARITY_URL, "similarity.pkl")
 
 movies_dict = pickle.load(open("movie_dict.pkl", "rb"))
 movies = pd.DataFrame(movies_dict)
 similarity = pickle.load(open("similarity.pkl", "rb"))
+
 
 # --------- FUNCTIONS ----------
 
